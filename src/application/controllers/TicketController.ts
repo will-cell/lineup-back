@@ -4,9 +4,12 @@ import { ITicketUseCases } from '../../domain/usecases/IUseCases';
 export class TicketController {
     constructor(private ticketUseCases: ITicketUseCases) {}
 
-    async createTicket = async (req: Request, res: Response) => {
+    createTicket = async (req: Request, res: Response) => {
         try {
             const { restaurantId, partySize, firstName, lastName } = req.body;
+            if (!req.user) {
+                return res.status(401).json({ error: 'Utilisateur non authentifié' });
+            }
             const userId = req.user.id;
 
             const ticket = await this.ticketUseCases.createTicket(
@@ -23,7 +26,7 @@ export class TicketController {
         }
     };
 
-    async getActiveTickets = async (req: Request, res: Response) => {
+    getActiveTickets = async (req: Request, res: Response) => {
         try {
             const { restaurantId } = req.params;
             const tickets = await this.ticketUseCases.getActiveTickets(restaurantId);
@@ -33,7 +36,7 @@ export class TicketController {
         }
     };
 
-    async cancelTicket = async (req: Request, res: Response) => {
+    cancelTicket = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const ticket = await this.ticketUseCases.cancelTicket(id);
@@ -43,7 +46,7 @@ export class TicketController {
         }
     };
 
-    async notifyTicket = async (req: Request, res: Response) => {
+    notifyTicket = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const ticket = await this.ticketUseCases.notifyTicket(id);
@@ -53,7 +56,7 @@ export class TicketController {
         }
     };
 
-    async seatTicket = async (req: Request, res: Response) => {
+    seatTicket = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const ticket = await this.ticketUseCases.seatTicket(id);
@@ -63,7 +66,7 @@ export class TicketController {
         }
     };
 
-    async getTicketById = async (req: Request, res: Response) => {
+    getTicketById = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const ticket = await this.ticketUseCases.getTicketById(id);

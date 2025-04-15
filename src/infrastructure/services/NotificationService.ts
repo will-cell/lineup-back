@@ -37,7 +37,7 @@ export class NotificationService {
         return supabase
             .channel(NotificationService.CHANNEL_NAME)
             .on(
-                'broadcast',
+                'system',
                 { event: 'new_notification', filter: `userId=eq.${userId}` },
                 callback
             )

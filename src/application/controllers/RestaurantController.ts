@@ -4,14 +4,19 @@ import { IRestaurantUseCases } from '../../domain/usecases/IUseCases';
 export class RestaurantController {
     constructor(private restaurantUseCases: IRestaurantUseCases) {}
 
-    async createRestaurant = async (req: Request, res: Response) => {
+    createRestaurant = async (req: Request, res: Response) => {
         try {
             const { name, location, capacity, waitingTimePerTicket, notificationThreshold } = req.body;
-            const ownerId = req.user.id;
+            const ownerId = req.user?.id;
+            if (!ownerId) {
+                return res.status(401).json({ error: 'Utilisateur non authentifié' });
+            }
 
             const restaurant = await this.restaurantUseCases.createRestaurant(ownerId, {
                 name,
-                location,
+                address: location,
+                latitude: location.latitude,
+                longitude: location.longitude,
                 capacity,
                 waitingTimePerTicket,
                 notificationThreshold,
@@ -24,7 +29,7 @@ export class RestaurantController {
         }
     };
 
-    async updateSettings = async (req: Request, res: Response) => {
+    updateSettings = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const { waitingTimePerTicket, capacity, notificationThreshold } = req.body;
@@ -42,7 +47,7 @@ export class RestaurantController {
         }
     };
 
-    async getNearbyRestaurants = async (req: Request, res: Response) => {
+    getNearbyRestaurants = async (req: Request, res: Response) => {
         try {
             const { latitude, longitude, radius } = req.query;
             const lat = parseFloat(latitude as string);
@@ -56,7 +61,7 @@ export class RestaurantController {
         }
     };
 
-    async getRestaurantById = async (req: Request, res: Response) => {
+    getRestaurantById = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const restaurant = await this.restaurantUseCases.getRestaurantById(id);

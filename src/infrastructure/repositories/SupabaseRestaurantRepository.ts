@@ -25,7 +25,6 @@ export class SupabaseRestaurantRepository implements IRestaurantRepository {
     }
 
     async findNearby(latitude: number, longitude: number, radiusKm: number): Promise<Restaurant[]> {
-        // Utilisation de la fonction ST_DWithin de PostGIS pour trouver les restaurants à proximité
         const { data, error } = await supabase.rpc('find_restaurants_nearby', {
             lat: latitude,
             lng: longitude,
@@ -41,7 +40,7 @@ export class SupabaseRestaurantRepository implements IRestaurantRepository {
             .from('restaurants')
             .insert([{
                 ...restaurant,
-                averageWaitingTime: 0
+                average_waiting_time: 0
             }])
             .select()
             .single();
@@ -63,7 +62,6 @@ export class SupabaseRestaurantRepository implements IRestaurantRepository {
     }
 
     async updateAverageWaitingTime(id: string): Promise<Restaurant> {
-        // Calcul du temps moyen d'attente basé sur les tickets récents
         const { data, error } = await supabase.rpc('calculate_average_waiting_time', {
             restaurant_id: id
         });
