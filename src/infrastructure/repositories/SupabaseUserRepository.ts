@@ -9,7 +9,8 @@ export class SupabaseUserRepository implements IUserRepository {
             .select('*')
             .eq('id', id)
             .single();
-
+        console.log('findById', id);
+        console.log('findById', data, error);
         if (error) throw error;
         return data as User | null;
     }

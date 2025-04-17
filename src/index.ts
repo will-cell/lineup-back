@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { createRestaurantRouter } from './interfaces/http/restaurantRoutes';
 import { createTicketRouter } from './interfaces/http/ticketRoutes';
+import { createAuthRouter } from './interfaces/http/authRoutes';
 
 // Repositories
 import { SupabaseRestaurantRepository } from './infrastructure/repositories/SupabaseRestaurantRepository';
@@ -19,12 +21,21 @@ import { NotificationService } from './infrastructure/services/NotificationServi
 // Controllers
 import { RestaurantController } from './application/controllers/RestaurantController';
 import { TicketController } from './application/controllers/TicketController';
+import { AuthController } from './application/controllers/AuthController';
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+        ? process.env.CLIENT_URL 
+        : true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // Initialisation des repositories
 const restaurantRepository = new SupabaseRestaurantRepository();
@@ -41,17 +52,20 @@ const ticketUseCases = new TicketUseCases(
     restaurantRepository,
     notificationService
 );
+const userUseCases = new UserUseCases(userRepository);
 
 // Initialisation des contrôleurs
 const restaurantController = new RestaurantController(restaurantUseCases);
 const ticketController = new TicketController(ticketUseCases);
+const authController = new AuthController(userUseCases);
 
 // Routes
+app.use('/api/auth', createAuthRouter(authController));
 app.use('/api/restaurants', createRestaurantRouter(restaurantController));
 app.use('/api/tickets', createTicketRouter(ticketController));
 
 // Gestion des erreurs
-app.use((err: Error, req: express.Request, res: express.Response) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Une erreur interne est survenue' });
 });
