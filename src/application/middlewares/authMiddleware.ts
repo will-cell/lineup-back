@@ -2,15 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../../infrastructure/services/supabase';
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    // Vérifier d'abord le cookie
+    const accessToken = req.cookies?.access_token;
+    
+    // Si pas de cookie, vérifier l'en-tête Authorization
     const authHeader = req.headers.authorization;
+    const token = accessToken || (authHeader ? authHeader.split(' ')[1] : null);
 
-    if (!authHeader) {
+    if (!token) {
         return res.status(401).json({ error: 'Token d\'authentification manquant' });
     }
 
     try {
-        const token = authHeader.split(' ')[1];
-        
         // Vérifier si le token est valide
         const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
@@ -51,6 +54,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         req.user = session.user;
         next();
     } catch (error) {
+        console.error('Erreur d\'authentification:', error);
         return res.status(401).json({ error: 'Erreur d\'authentification' });
     }
 };
