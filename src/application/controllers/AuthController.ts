@@ -124,24 +124,7 @@ export class AuthController {
                 return res.status(404).json({ error: 'Utilisateur non trouvé' });
             }
 
-            // Si l'utilisateur est propriétaire d'un restaurant, récupérer les informations du restaurant
-            let restaurantInfo = null;
-            if (user.restaurantId) {
-                const { data: restaurant } = await supabase
-                    .from('restaurants')
-                    .select('*')
-                    .eq('id', user.restaurantId)
-                    .single();
-                
-                if (restaurant) {
-                    restaurantInfo = restaurant;
-                }
-            }
-
-            res.json({
-                ...user,
-                restaurant: restaurantInfo
-            });
+            res.json(user);
         } catch (error) {
             console.error('Erreur getCurrentUser:', error);
             res.status(500).json({ error: 'Erreur lors de la récupération de l\'utilisateur' });

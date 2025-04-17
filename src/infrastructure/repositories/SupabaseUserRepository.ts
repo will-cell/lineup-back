@@ -7,7 +7,10 @@ export class SupabaseUserRepository implements IUserRepository {
     async findById(id: string): Promise<User | null> {
         const { data, error } = await supabase
             .from('users')
-            .select('*')
+            .select(`
+                *,
+                restaurant:restaurants!users_restaurant_id_fkey(*)
+            `)
             .eq('id', id)
             .single();
 
@@ -31,7 +34,10 @@ export class SupabaseUserRepository implements IUserRepository {
                 last_name: dto.last_name,
                 restaurant_id: dto.restaurant_id
             }])
-            .select()
+            .select(`
+                *,
+                restaurant:restaurants!users_restaurant_id_fkey(*)
+            `)
             .single();
 
         if (error) throw error;
@@ -43,14 +49,17 @@ export class SupabaseUserRepository implements IUserRepository {
         const updateData: Record<string, any> = {};
         if (user.firstName) updateData.first_name = user.firstName;
         if (user.lastName) updateData.last_name = user.lastName;
-        if (user.restaurantId) updateData.restaurant_id = user.restaurantId;
         if (user.email) updateData.email = user.email;
+        if (user.restaurant) updateData.restaurant_id = user.restaurant.id;
 
         const { data, error } = await supabase
             .from('users')
             .update(updateData)
             .eq('id', id)
-            .select()
+            .select(`
+                *,
+                restaurant:restaurants!users_restaurant_id_fkey(*)
+            `)
             .single();
 
         if (error) throw error;
