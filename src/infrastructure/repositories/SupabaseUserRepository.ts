@@ -1,6 +1,7 @@
 import { User } from '../../domain/entities/User';
 import { IUserRepository } from '../../domain/repositories/IRepositories';
 import { supabase } from '../services/supabase';
+import { UserAdapter } from '../adapters/UserAdapter';
 
 export class SupabaseUserRepository implements IUserRepository {
     async findById(id: string): Promise<User | null> {
@@ -9,32 +10,50 @@ export class SupabaseUserRepository implements IUserRepository {
             .select('*')
             .eq('id', id)
             .single();
-        console.log('findById', id);
-        console.log('findById', data, error);
+
         if (error) throw error;
-        return data as User | null;
+        return data ? UserAdapter.toDomain(data) : null;
     }
 
     async create(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+        const dto = UserAdapter.toDTO({
+            ...user,
+            id: '',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
         const { data, error } = await supabase
             .from('users')
-            .insert([user])
+            .insert([{
+                email: dto.email,
+                first_name: dto.first_name,
+                last_name: dto.last_name,
+                restaurant_id: dto.restaurant_id
+            }])
             .select()
             .single();
 
         if (error) throw error;
-        return data as User;
+        return UserAdapter.toDomain(data);
     }
 
     async update(id: string, user: Partial<User>): Promise<User> {
+        // Convertir les propriétés en snake_case pour la base de données
+        const updateData: Record<string, any> = {};
+        if (user.firstName) updateData.first_name = user.firstName;
+        if (user.lastName) updateData.last_name = user.lastName;
+        if (user.restaurantId) updateData.restaurant_id = user.restaurantId;
+        if (user.email) updateData.email = user.email;
+
         const { data, error } = await supabase
             .from('users')
-            .update(user)
+            .update(updateData)
             .eq('id', id)
             .select()
             .single();
 
         if (error) throw error;
-        return data as User;
+        return UserAdapter.toDomain(data);
     }
 }
